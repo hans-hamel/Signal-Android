@@ -2,6 +2,8 @@ package org.thoughtcrime.securesms.components.location;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,12 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapView;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
+import androidx.core.content.ContextCompat;
 
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.util.concurrent.ListenableFuture;
@@ -25,7 +22,6 @@ import java.util.concurrent.ExecutionException;
 
 public class SignalMapView extends LinearLayout {
 
-  private MapView   mapView;
   private ImageView imageView;
   private TextView  textView;
 
@@ -47,7 +43,6 @@ public class SignalMapView extends LinearLayout {
     setOrientation(LinearLayout.VERTICAL);
     LayoutInflater.from(context).inflate(R.layout.signal_map_view, this, true);
 
-    this.mapView   = findViewById(R.id.map_view);
     this.imageView = findViewById(R.id.image_view);
     this.textView  = findViewById(R.id.address_view);
   }
@@ -57,7 +52,7 @@ public class SignalMapView extends LinearLayout {
 
     this.imageView.setVisibility(View.GONE);
     this.textView.setText(place.getDescription());
-    snapshot(place, mapView).addListener(new ListenableFuture.Listener<Bitmap>() {
+    snapshot(textView.getContext()).addListener(new ListenableFuture.Listener<>() {
       @Override
       public void onSuccess(Bitmap result) {
         future.set(result);
@@ -74,33 +69,16 @@ public class SignalMapView extends LinearLayout {
     return future;
   }
 
-  public static ListenableFuture<Bitmap> snapshot(final LatLng place, @NonNull final MapView mapView) {
+  public static ListenableFuture<Bitmap> snapshot(@NonNull final Context context) {
     final SettableFuture<Bitmap> future = new SettableFuture<>();
-    mapView.onCreate(null);
-    mapView.onStart();
-    mapView.onResume();
-
-    mapView.setVisibility(View.VISIBLE);
-
-    mapView.getMapAsync(googleMap -> {
-      googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(place, 13));
-      googleMap.addMarker(new MarkerOptions().position(place));
-      googleMap.setBuildingsEnabled(true);
-      googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-      googleMap.getUiSettings().setAllGesturesEnabled(false);
-      googleMap.setOnMapLoadedCallback(() -> googleMap.snapshot(bitmap -> {
-        future.set(bitmap);
-        mapView.setVisibility(View.GONE);
-        mapView.onPause();
-        mapView.onStop();
-        mapView.onDestroy();
-      }));
-    });
+    Drawable drawable = ContextCompat.getDrawable(context, R.drawable.img_map_placeholder);
+    Bitmap   bitmap   = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+    Canvas   canvas   = new Canvas(bitmap);
+    drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+    drawable.draw(canvas);
+    future.set(bitmap);
 
     return future;
-  }
-  public static ListenableFuture<Bitmap> snapshot(final SignalPlace place, @NonNull final MapView mapView) {
-    return snapshot(place.getLatLong(), mapView);
   }
 
 }

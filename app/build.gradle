@@ -89,7 +89,7 @@ android {
     buildToolsVersion = signalBuildToolsVersion
     compileSdkVersion = signalCompileSdkVersion
 
-    flavorDimensions 'distribution', 'environment'
+    flavorDimensions 'distribution', 'environment', 'omh'
     useLibrary 'org.apache.http.legacy'
     testBuildType 'instrumentation'
 
@@ -333,6 +333,30 @@ android {
     }
 
     productFlavors {
+        gms {
+            dimension 'omh'
+            ext.websiteUpdateUrl = "null"
+            buildConfigField "boolean", "PLAY_STORE_DISABLED", "false"
+            buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
+            buildConfigField "String", "BUILD_DISTRIBUTION_TYPE", "\"play\""
+        }
+
+        nongms {
+            dimension 'omh'
+            ext.websiteUpdateUrl = "https://updates.signal.org/android"
+            buildConfigField "boolean", "PLAY_STORE_DISABLED", "true"
+            buildConfigField "String", "NOPLAY_UPDATE_URL", "\"$ext.websiteUpdateUrl\""
+            buildConfigField "String", "BUILD_DISTRIBUTION_TYPE", "\"website\""
+        }
+
+        singleBuild {
+            dimension 'omh'
+            ext.websiteUpdateUrl = "https://updates.signal.org/android"
+            buildConfigField "boolean", "PLAY_STORE_DISABLED", "true"
+            buildConfigField "String", "NOPLAY_UPDATE_URL", "\"$ext.websiteUpdateUrl\""
+            buildConfigField "String", "BUILD_DISTRIBUTION_TYPE", "\"website\""
+        }
+
         play {
             dimension 'distribution'
             isDefault true
@@ -459,6 +483,11 @@ android {
 }
 
 dependencies {
+    gmsImplementation 'com.openmobilehub.android:maps-api-googlemaps:1.0.0-beta'
+    nongmsImplementation 'com.openmobilehub.android:maps-api-openstreetmap:1.0.0-beta'
+    singleBuildImplementation 'com.openmobilehub.android:maps-api-googlemaps:1.0.0-beta'
+    singleBuildImplementation 'com.openmobilehub.android:maps-api-openstreetmap:1.0.0-beta'
+
     implementation libs.androidx.fragment.ktx
     lintChecks project(':lintchecks')
 
@@ -508,7 +537,6 @@ dependencies {
         exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
     }
 
-    implementation libs.google.play.services.maps
     implementation libs.google.play.services.auth
 
     implementation libs.bundles.exoplayer
@@ -707,5 +735,5 @@ def getMapsKey() {
     if (mapKey.exists()) {
         return mapKey.readLines()[0]
     }
-    return "AIzaSyCSx9xea86GwDKGznCAULE9Y5a8b-TfN9U"
+    return "AIzaSyC-sSkiwoaOxrELfIPQMejJARhqWmJ-I6E"
 }

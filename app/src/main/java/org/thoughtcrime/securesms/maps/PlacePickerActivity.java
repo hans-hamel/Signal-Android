@@ -5,7 +5,6 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.location.Address;
@@ -25,12 +24,9 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapView;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MapStyleOptions;
+import com.omh.android.maps.api.presentation.fragments.OmhMapFragment;
+import com.omh.android.maps.api.presentation.interfaces.maps.OmhMap;
+import com.omh.android.maps.api.presentation.models.OmhCoordinate;
 
 import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.R;
@@ -58,7 +54,7 @@ public final class PlacePickerActivity extends AppCompatActivity {
   private static final String TAG = Log.tag(PlacePickerActivity.class);
 
   // If it cannot load location for any reason, it defaults to the prime meridian.
-  private static final LatLng PRIME_MERIDIAN = new LatLng(51.4779, -0.0015);
+  private static final OmhCoordinate PRIME_MERIDIAN = new OmhCoordinate(51.4779, -0.0015);
   private static final String ADDRESS_INTENT = "ADDRESS";
   private static final float  ZOOM           = 17.0f;
 
@@ -70,10 +66,10 @@ public final class PlacePickerActivity extends AppCompatActivity {
 
   private SingleAddressBottomSheet bottomSheet;
   private Address                  currentAddress;
-  private LatLng                   initialLocation;
-  private LatLng                   currentLocation = new LatLng(0, 0);
-  private AddressLookup            addressLookup;
-  private GoogleMap                googleMap;
+  private OmhCoordinate initialLocation;
+  private OmhCoordinate currentLocation = new OmhCoordinate(0, 0);
+  private AddressLookup addressLookup;
+  private OmhMap        omhMap;
 
   public static void startActivityForResultAtCurrentLocation(@NonNull Fragment fragment, int requestCode, @ColorInt int chatColor) {
     fragment.startActivityForResult(new Intent(fragment.requireActivity(), PlacePickerActivity.class).putExtra(KEY_CHAT_COLOR, chatColor), requestCode);
@@ -102,7 +98,7 @@ public final class PlacePickerActivity extends AppCompatActivity {
         ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)
     {
       new LocationRetriever(this, this, location -> {
-        setInitialLocation(new LatLng(location.getLatitude(), location.getLongitude()));
+        setInitialLocation(new OmhCoordinate(location.getLatitude(), location.getLongitude()));
       }, () -> {
         Log.w(TAG, "Failed to get location.");
         setInitialLocation(PRIME_MERIDIAN);
@@ -112,26 +108,15 @@ public final class PlacePickerActivity extends AppCompatActivity {
       setInitialLocation(PRIME_MERIDIAN);
     }
 
-    SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+    OmhMapFragment mapFragment = (OmhMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
     if (mapFragment == null) throw new AssertionError("No map fragment");
 
-    mapFragment.getMapAsync(googleMap -> {
-      setMap(googleMap);
-      if (DynamicTheme.isDarkTheme(this)) {
-        try {
-          boolean success = googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style));
+    mapFragment.getMapAsync(omhMap -> {
+      setMap(omhMap);
 
-          if (!success) {
-            Log.e(TAG, "Style parsing failed.");
-          }
-        } catch (Resources.NotFoundException e) {
-          Log.e(TAG, "Can't find style. Error: ", e);
-        }
-      }
+      enableMyLocationButtonIfHaveThePermission(omhMap);
 
-      enableMyLocationButtonIfHaveThePermission(googleMap);
-
-      googleMap.setOnCameraMoveStartedListener(i -> {
+      omhMap.setOnCameraMoveStartedListener(i -> {
         markerImage.animate()
                    .translationY(-75f)
                    .setInterpolator(OVERSHOOT_INTERPOLATOR)
@@ -141,14 +126,14 @@ public final class PlacePickerActivity extends AppCompatActivity {
         bottomSheet.hide();
       });
 
-      googleMap.setOnCameraIdleListener(() -> {
+      omhMap.setOnCameraIdleListener(() -> {
         markerImage.animate()
                    .translationY(0f)
                    .setInterpolator(OVERSHOOT_INTERPOLATOR)
                    .setDuration(ANIMATION_DURATION)
                    .start();
 
-        setCurrentLocation(googleMap.getCameraPosition().target);
+        setCurrentLocation(omhMap.getCameraPositionCoordinate());
       });
     });
   }
@@ -159,27 +144,27 @@ public final class PlacePickerActivity extends AppCompatActivity {
     dynamicTheme.onResume(this);
   }
 
-  private void setInitialLocation(@NonNull LatLng latLng) {
+  private void setInitialLocation(@NonNull OmhCoordinate latLng) {
     initialLocation = latLng;
 
     moveMapToInitialIfPossible();
   }
 
-  private void setMap(GoogleMap googleMap) {
-    this.googleMap = googleMap;
+  private void setMap(OmhMap omhMap) {
+    this.omhMap = omhMap;
 
     moveMapToInitialIfPossible();
   }
 
   private void moveMapToInitialIfPossible() {
-    if (initialLocation != null && googleMap != null) {
+    if (initialLocation != null && omhMap != null) {
       Log.d(TAG, "Moving map to initial location");
-      googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLocation, ZOOM));
+      omhMap.moveCamera(initialLocation, ZOOM);
       setCurrentLocation(initialLocation);
     }
   }
 
-  private void setCurrentLocation(LatLng location) {
+  private void setCurrentLocation(OmhCoordinate location) {
     currentLocation = location;
     bottomSheet.showLoading();
     lookupAddress(location);
@@ -188,11 +173,10 @@ public final class PlacePickerActivity extends AppCompatActivity {
   private void finishWithAddress() {
     Intent      returnIntent = new Intent();
     String      address      = currentAddress != null && currentAddress.getAddressLine(0) != null ? currentAddress.getAddressLine(0) : "";
-    AddressData addressData  = new AddressData(currentLocation.latitude, currentLocation.longitude, address);
+    AddressData addressData  = new AddressData(currentLocation.getLatitude(), currentLocation.getLongitude(), address);
 
     SimpleProgressDialog.DismissibleDialog dismissibleDialog = SimpleProgressDialog.showDelayed(this);
-    MapView mapView = findViewById(R.id.map_view);
-    SignalMapView.snapshot(currentLocation, mapView).addListener(new ListenableFuture.Listener<>() {
+    SignalMapView.snapshot(this).addListener(new ListenableFuture.Listener<>() {
       @Override
       public void onSuccess(Bitmap result) {
         dismissibleDialog.dismiss();
@@ -215,16 +199,16 @@ public final class PlacePickerActivity extends AppCompatActivity {
     });
   }
 
-  private void enableMyLocationButtonIfHaveThePermission(GoogleMap googleMap) {
+  private void enableMyLocationButtonIfHaveThePermission(OmhMap omhMap) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
         checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)   == PackageManager.PERMISSION_GRANTED ||
         checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)
     {
-      googleMap.setMyLocationEnabled(true);
+      omhMap.setMyLocationEnabled(true);
     }
   }
 
-  private void lookupAddress(@Nullable LatLng target) {
+  private void lookupAddress(@Nullable OmhCoordinate target) {
     if (addressLookup != null) {
       addressLookup.cancel(true);
     }
@@ -241,7 +225,7 @@ public final class PlacePickerActivity extends AppCompatActivity {
   }
 
   @SuppressLint("StaticFieldLeak")
-  private class AddressLookup extends AsyncTask<LatLng, Void, Address> {
+  private class AddressLookup extends AsyncTask<OmhCoordinate, Void, Address> {
 
     private final String TAG = Log.tag(AddressLookup.class);
     private final Geocoder geocoder;
@@ -251,12 +235,12 @@ public final class PlacePickerActivity extends AppCompatActivity {
     }
 
     @Override
-    protected Address doInBackground(LatLng... latLngs) {
+    protected Address doInBackground(OmhCoordinate... latLngs) {
       if (latLngs.length == 0) return null;
-      LatLng latLng = latLngs[0];
+      OmhCoordinate latLng = latLngs[0];
       if (latLng == null) return null;
       try {
-        List<Address> result = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+        List<Address> result = geocoder.getFromLocation(latLng.getLatitude(), latLng.getLongitude(), 1);
         return !result.isEmpty() ? result.get(0) : null;
       } catch (IOException e) {
         Log.w(TAG, "Failed to get address from location", e);

@@ -137,6 +137,7 @@ public class ApplicationContext extends MultiDexApplication implements AppForegr
     Tracer.getInstance().start("Application#onCreate()");
     AppStartup.getInstance().onApplicationCreate();
     SignalLocalMetrics.ColdStart.start();
+    OmhUtils.initializeOmhMaps();
 
     long startTime = System.currentTimeMillis();
 
