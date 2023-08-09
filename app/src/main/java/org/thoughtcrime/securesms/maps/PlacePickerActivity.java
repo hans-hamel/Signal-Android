@@ -24,6 +24,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.gms.maps.MapView;
 import com.omh.android.maps.api.presentation.fragments.OmhMapFragment;
 import com.omh.android.maps.api.presentation.interfaces.maps.OmhMap;
 import com.omh.android.maps.api.presentation.models.OmhCoordinate;
@@ -66,10 +67,10 @@ public final class PlacePickerActivity extends AppCompatActivity {
 
   private SingleAddressBottomSheet bottomSheet;
   private Address                  currentAddress;
-  private OmhCoordinate initialLocation;
-  private OmhCoordinate currentLocation = new OmhCoordinate(0, 0);
-  private AddressLookup addressLookup;
-  private OmhMap        omhMap;
+  private OmhCoordinate            initialLocation;
+  private OmhCoordinate            currentLocation = new OmhCoordinate(0, 0);
+  private AddressLookup            addressLookup;
+  private OmhMap                   omhMap;
 
   public static void startActivityForResultAtCurrentLocation(@NonNull Fragment fragment, int requestCode, @ColorInt int chatColor) {
     fragment.startActivityForResult(new Intent(fragment.requireActivity(), PlacePickerActivity.class).putExtra(KEY_CHAT_COLOR, chatColor), requestCode);
@@ -176,7 +177,8 @@ public final class PlacePickerActivity extends AppCompatActivity {
     AddressData addressData  = new AddressData(currentLocation.getLatitude(), currentLocation.getLongitude(), address);
 
     SimpleProgressDialog.DismissibleDialog dismissibleDialog = SimpleProgressDialog.showDelayed(this);
-    SignalMapView.snapshot(this).addListener(new ListenableFuture.Listener<>() {
+    MapView                                mapView           = findViewById(R.id.map_view);
+    SignalMapView.snapshot(currentLocation, mapView).addListener(new ListenableFuture.Listener<>() {
       @Override
       public void onSuccess(Bitmap result) {
         dismissibleDialog.dismiss();

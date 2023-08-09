@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.omh.android.maps.api.presentation.models.OmhCoordinate;
 
 import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.maps.AddressData;
@@ -43,6 +44,11 @@ public class SignalPlace {
   @JsonCreator
   @SuppressWarnings("unused")
   public SignalPlace() {}
+
+  @JsonIgnore
+  public OmhCoordinate getOmhCoordinate() {
+    return new OmhCoordinate(latitude, longitude);
+  }
 
   @JsonIgnore
   public String getDescription() {
