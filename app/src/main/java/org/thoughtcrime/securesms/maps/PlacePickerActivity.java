@@ -25,10 +25,8 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 
-import com.omh.android.maps.api.factories.OmhMapProvider;
 import com.omh.android.maps.api.presentation.fragments.OmhMapFragment;
 import com.omh.android.maps.api.presentation.interfaces.maps.OmhMap;
-import com.omh.android.maps.api.presentation.interfaces.maps.OmhMapView;
 import com.omh.android.maps.api.presentation.models.OmhCoordinate;
 
 import org.signal.core.util.logging.Log;
