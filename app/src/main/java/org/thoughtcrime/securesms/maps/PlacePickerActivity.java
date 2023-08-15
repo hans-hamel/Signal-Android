@@ -177,7 +177,7 @@ public final class PlacePickerActivity extends AppCompatActivity {
     AddressData addressData  = new AddressData(currentLocation.getLatitude(), currentLocation.getLongitude(), address);
 
     SimpleProgressDialog.DismissibleDialog dismissibleDialog = SimpleProgressDialog.showDelayed(this);
-    FrameLayout                            frameLayout       = findViewById(R.id.map_view);
+    FrameLayout                            frameLayout       = findViewById(R.id.map_view_container);
     SignalMapView.snapshot(currentLocation, frameLayout).addListener(new ListenableFuture.Listener<>() {
       @Override
       public void onSuccess(Bitmap result) {

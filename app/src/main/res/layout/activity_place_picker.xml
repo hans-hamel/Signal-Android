@@ -9,7 +9,7 @@
     tools:context="org.thoughtcrime.securesms.maps.PlacePickerActivity">
 
     <FrameLayout
-        android:id="@+id/map_view"
+        android:id="@+id/map_view_container"
         android:layout_width="210dp"
         android:layout_height="210dp"
         android:visibility="visible"

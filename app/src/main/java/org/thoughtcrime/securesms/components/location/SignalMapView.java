@@ -47,7 +47,7 @@ public class SignalMapView extends LinearLayout {
     setOrientation(LinearLayout.VERTICAL);
     LayoutInflater.from(context).inflate(R.layout.signal_map_view, this, true);
 
-    this.frameLayout = findViewById(R.id.map_view);
+    this.frameLayout = findViewById(R.id.map_view_container);
     this.imageView = findViewById(R.id.image_view);
     this.textView  = findViewById(R.id.address_view);
   }
