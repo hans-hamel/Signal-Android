@@ -483,10 +483,10 @@ android {
 }
 
 dependencies {
-    gmsImplementation 'com.openmobilehub.android:maps-api-googlemaps:1.0.0-beta'
-    nongmsImplementation 'com.openmobilehub.android:maps-api-openstreetmap:1.0.0-beta'
-    singleBuildImplementation 'com.openmobilehub.android:maps-api-googlemaps:1.0.0-beta'
-    singleBuildImplementation 'com.openmobilehub.android:maps-api-openstreetmap:1.0.0-beta'
+    gmsImplementation 'com.openmobilehub.android:maps-api-googlemaps:1.0.1-beta'
+    nongmsImplementation 'com.openmobilehub.android:maps-api-openstreetmap:1.0.1-beta'
+    singleBuildImplementation 'com.openmobilehub.android:maps-api-googlemaps:1.0.1-beta'
+    singleBuildImplementation 'com.openmobilehub.android:maps-api-openstreetmap:1.0.1-beta'
 
     implementation libs.androidx.fragment.ktx
     lintChecks project(':lintchecks')

@@ -21,6 +21,9 @@ dependencyResolutionManagement {
         maven {
             url "https://dl.cloudsmith.io/qxAgwaeEE1vN8aLU/mobilecoin/mobilecoin/maven/"
         }
+        maven {
+            url 'https://s01.oss.sonatype.org/content/groups/staging/'
+        }
         jcenter {
             content {
                 includeVersion "mobi.upod", "time-duration-picker", "1.1.3"
