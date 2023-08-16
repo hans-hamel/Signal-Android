@@ -26,7 +26,7 @@ import java.util.concurrent.ExecutionException;
 public class SignalMapView extends LinearLayout {
 
   private FrameLayout frameLayout;
-  private ImageView   imageView;
+  private ImageView imageView;
   private TextView  textView;
 
   public SignalMapView(Context context) {
@@ -57,7 +57,6 @@ public class SignalMapView extends LinearLayout {
 
     this.imageView.setVisibility(View.GONE);
     this.textView.setText(place.getDescription());
-
     snapshot(place, frameLayout).addListener(new ListenableFuture.Listener<>() {
       @Override
       public void onSuccess(Bitmap result) {
@@ -85,12 +84,12 @@ public class SignalMapView extends LinearLayout {
     frameLayout.addView(omhMapView.getView());
     frameLayout.setVisibility(View.VISIBLE);
 
-    omhMapView.getMapAsync(googleMap -> {
+    omhMapView.getMapAsync(omhMap -> {
       OmhMarkerOptions omhMarkerOptions = new OmhMarkerOptions();
       omhMarkerOptions.setPosition(place);
-      googleMap.moveCamera(place, 13);
-      googleMap.addMarker(omhMarkerOptions);
-      googleMap.setOnMapLoadedCallback(() -> googleMap.snapshot(bitmap -> {
+      omhMap.moveCamera(place, 13);
+      omhMap.addMarker(omhMarkerOptions);
+      omhMap.setOnMapLoadedCallback(() -> omhMap.snapshot(bitmap -> {
         future.set(bitmap);
         frameLayout.setVisibility(View.GONE);
         omhMapView.onPause();
